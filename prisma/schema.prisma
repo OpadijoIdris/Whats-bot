@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Account represents a Business/Tenant in our SaaS
+model Account {
+  id                String   @id @default(uuid())
+  name              String
+  whatsappPhoneId   String   @unique
+  whatsappToken     String
+  openaiApiKey      String?  // Optional: override global key
+  botPersonality    String   @default("You are a helpful and professional WhatsApp AI assistant.")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  users             User[]
+}
+
+// User represents an end-customer interacting via WhatsApp
+model User {
+  id            String   @id @default(uuid())
+  phoneNumber   String   // The WhatsApp ID (e.g. 23480...)
+  name          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Multi-tenancy: Which business is this user talking to?
+  accountId     String
+  account       Account  @relation(fields: [accountId], references: [id])
+
+  // Relations
+  conversations Conversation[]
+
+  @@unique([phoneNumber, accountId])
+}
+
+model Conversation {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  messages    Message[]
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  whatsappMid    String?  @unique // WhatsApp's message ID
+  role           MessageRole
+  content        String
+  createdAt      DateTime @default(now())
+
+  // Relations
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
