@@ -21,9 +21,10 @@ export class MessagingPipelineService {
   async processIncomingMessage(context: IncomingContext): Promise<void> {
     const { from, messageId, text, phoneId, userName } = context;
 
+    let account;
     try {
       // 1. Identify Account (Tenant)
-      const account = await this.conversationRepo.getAccountByPhoneId(phoneId);
+      account = await this.conversationRepo.getAccountByPhoneId(phoneId);
       if (!account) {
         console.error(`[Pipeline]: No account found for Phone ID: ${phoneId}`);
         return;
@@ -39,7 +40,10 @@ export class MessagingPipelineService {
       await this.conversationRepo.addMessage(conversation.id, MessageRole.USER, text, messageId);
 
       // 5. Mark as read
-      await this.whatsappService.markAsRead(messageId);
+      await this.whatsappService.markAsRead(messageId, {
+        accessToken: account.whatsappToken,
+        phoneNumberId: account.whatsappPhoneId
+      });
 
       // 6. Get Conversation History for AI context
       const history = await this.conversationRepo.getConversationHistory(conversation.id, 10);
@@ -53,25 +57,37 @@ export class MessagingPipelineService {
       ];
 
       // 7. Generate AI response
-      const aiResponse = await this.openaiService.generateChatResponse(chatMessages);
+      const aiResponse = await this.openaiService.generateChatResponse(
+        chatMessages, 
+        account.openaiApiKey || undefined
+      );
 
       // 8. Save AI response to DB
       await this.conversationRepo.addMessage(conversation.id, MessageRole.ASSISTANT, aiResponse);
 
       // 9. Send response back
-      await this.whatsappService.sendTextMessage(from, aiResponse);
+      await this.whatsappService.sendTextMessage(from, aiResponse, {
+        accessToken: account.whatsappToken,
+        phoneNumberId: account.whatsappPhoneId
+      });
       
       console.log(`[Pipeline]: Processed message for user ${from} (Tenant: ${account.name})`);
     } catch (error) {
       console.error('[Pipeline]: Error processing message:', error);
       
-      try {
-        await this.whatsappService.sendTextMessage(
-          from, 
-          "I'm sorry, I'm having trouble processing your request right now. Please try again later."
-        );
-      } catch (innerError) {
-        console.error('[Pipeline]: Failed to send error fallback message:', innerError);
+      if (account) {
+        try {
+          await this.whatsappService.sendTextMessage(
+            from, 
+            "I'm sorry, I'm having trouble processing your request right now. Please try again later.",
+            {
+              accessToken: account.whatsappToken,
+              phoneNumberId: account.whatsappPhoneId
+            }
+          );
+        } catch (innerError) {
+          console.error('[Pipeline]: Failed to send error fallback message:', innerError);
+        }
       }
     }
   }

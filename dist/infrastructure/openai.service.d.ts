@@ -5,7 +5,7 @@ export interface ChatMessage {
 export declare class OpenAIService {
     private openai;
     constructor();
-    generateChatResponse(messages: ChatMessage[]): Promise<string>;
+    generateChatResponse(messages: ChatMessage[], customApiKey?: string): Promise<string>;
     generateTextResponse(prompt: string, systemPrompt?: string): Promise<string>;
 }
 //# sourceMappingURL=openai.service.d.ts.map

@@ -7,9 +7,12 @@ export class OpenAIService {
             apiKey: env.OPENAI_API_KEY,
         });
     }
-    async generateChatResponse(messages) {
+    async generateChatResponse(messages, customApiKey) {
         try {
-            const response = await this.openai.chat.completions.create({
+            const client = customApiKey
+                ? new OpenAI({ apiKey: customApiKey })
+                : this.openai;
+            const response = await client.chat.completions.create({
                 model: env.OPENAI_MODEL,
                 messages,
                 temperature: 0.7,

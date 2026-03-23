@@ -10,13 +10,26 @@ export class WhatsAppService {
   constructor() {
     this.accessToken = env.WHATSAPP_ACCESS_TOKEN;
     this.phoneNumberId = env.WHATSAPP_PHONE_NUMBER_ID;
-    this.baseUrl = `https://graph.facebook.com/${env.WHATSAPP_API_VERSION}/${this.phoneNumberId}`;
+    this.baseUrl = `https://graph.facebook.com/${env.WHATSAPP_API_VERSION}`;
   }
 
-  async sendTextMessage(to: string, text: string): Promise<SendMessageResponse> {
+  private getRequestConfig(customToken?: string, customPhoneId?: string) {
+    const token = customToken || this.accessToken;
+    const phoneId = customPhoneId || this.phoneNumberId;
+    return {
+      url: `${this.baseUrl}/${phoneId}/messages`,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    };
+  }
+
+  async sendTextMessage(to: string, text: string, options?: { accessToken?: string; phoneNumberId?: string }): Promise<SendMessageResponse> {
     try {
+      const { url, headers } = this.getRequestConfig(options?.accessToken, options?.phoneNumberId);
       const response = await axios.post<SendMessageResponse>(
-        `${this.baseUrl}/messages`,
+        url,
         {
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
@@ -25,10 +38,7 @@ export class WhatsAppService {
           text: { body: text },
         },
         {
-          headers: {
-            Authorization: `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json',
-          },
+          headers,
         }
       );
 
@@ -43,20 +53,18 @@ export class WhatsAppService {
     }
   }
 
-  async markAsRead(messageId: string): Promise<void> {
+  async markAsRead(messageId: string, options?: { accessToken?: string; phoneNumberId?: string }): Promise<void> {
     try {
+      const { url, headers } = this.getRequestConfig(options?.accessToken, options?.phoneNumberId);
       await axios.post(
-        `${this.baseUrl}/messages`,
+        url,
         {
           messaging_product: 'whatsapp',
           status: 'read',
           message_id: messageId,
         },
         {
-          headers: {
-            Authorization: `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json',
-          },
+          headers,
         }
       );
     } catch (error) {

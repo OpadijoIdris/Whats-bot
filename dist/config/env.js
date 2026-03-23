@@ -1,19 +1,35 @@
 import 'dotenv/config';
-import { cleanEnv, str, port, host } from 'envalid';
-export const env = cleanEnv(process.env, {
-    NODE_ENV: str({
-        choices: ['development', 'test', 'production', 'staging'],
-        default: 'development',
-    }),
-    PORT: port({ default: 3000 }),
-    WHATSAPP_PHONE_NUMBER_ID: str({ desc: 'Phone Number ID from Meta Developer Portal' }),
-    WHATSAPP_ACCESS_TOKEN: str({ desc: 'Permanent or Temporary Access Token' }),
-    WHATSAPP_VERIFY_TOKEN: str({ desc: 'Custom string for webhook verification' }),
-    WHATSAPP_API_VERSION: str({ default: 'v20.0' }),
-    OPENAI_API_KEY: str({ desc: 'OpenAI API Key' }),
-    OPENAI_MODEL: str({ default: 'gpt-4o' }),
-    REDIS_HOST: host({ default: 'localhost' }),
-    REDIS_PORT: port({ default: 6379 }),
-    DATABASE_URL: str({ default: '' }),
+import { cleanEnv, str, port, host, makeValidator } from 'envalid';
+const nonPlaceholder = makeValidator((val) => {
+    if (val.includes('YOUR_') || val.includes('HERE')) {
+        throw new Error('is still a placeholder value. Please replace it in your .env file.');
+    }
+    return val;
 });
+let validatedEnv;
+try {
+    validatedEnv = cleanEnv(process.env, {
+        NODE_ENV: str({
+            choices: ['development', 'test', 'production', 'staging'],
+            default: 'development',
+        }),
+        PORT: port({ default: 3000 }),
+        WHATSAPP_PHONE_NUMBER_ID: nonPlaceholder({ desc: 'Phone Number ID from Meta Developer Portal' }),
+        WHATSAPP_ACCESS_TOKEN: nonPlaceholder({ desc: 'Permanent or Temporary Access Token' }),
+        WHATSAPP_VERIFY_TOKEN: nonPlaceholder({ desc: 'Custom string for webhook verification' }),
+        WHATSAPP_API_VERSION: str({ default: 'v20.0' }),
+        OPENAI_API_KEY: nonPlaceholder({ desc: 'OpenAI API Key' }),
+        OPENAI_MODEL: str({ default: 'gpt-4o' }),
+        REDIS_HOST: host({ default: 'localhost' }),
+        REDIS_PORT: port({ default: 6379 }),
+        DATABASE_URL: str({ desc: 'PostgreSQL Connection URL' }),
+    });
+}
+catch (error) {
+    console.error('\n❌ ENVIRONMENT CONFIGURATION ERROR:');
+    console.error(error.message);
+    console.error('\nPlease update your .env file with valid credentials before starting the server.\n');
+    process.exit(1);
+}
+export const env = validatedEnv;
 //# sourceMappingURL=env.js.map

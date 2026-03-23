@@ -24,6 +24,7 @@ try {
     WHATSAPP_ACCESS_TOKEN: nonPlaceholder({ desc: 'Permanent or Temporary Access Token' }),
     WHATSAPP_VERIFY_TOKEN: nonPlaceholder({ desc: 'Custom string for webhook verification' }),
     WHATSAPP_API_VERSION: str({ default: 'v20.0' }),
+    WHATSAPP_APP_SECRET: nonPlaceholder({ desc: 'App Secret from Meta Developer Portal' }),
 
     // OpenAI Configuration
     OPENAI_API_KEY: nonPlaceholder({ desc: 'OpenAI API Key' }),

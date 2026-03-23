@@ -15,9 +15,14 @@ export class OpenAIService {
     });
   }
 
-  async generateChatResponse(messages: ChatMessage[]): Promise<string> {
+  async generateChatResponse(messages: ChatMessage[], customApiKey?: string): Promise<string> {
     try {
-      const response = await this.openai.chat.completions.create({
+      // Use custom API key if provided, otherwise use the default one
+      const client = customApiKey 
+        ? new OpenAI({ apiKey: customApiKey }) 
+        : this.openai;
+
+      const response = await client.chat.completions.create({
         model: env.OPENAI_MODEL,
         messages,
         temperature: 0.7,

@@ -4,7 +4,7 @@ import 'dotenv/config';
 const prisma = new PrismaClient();
 
 async function main() {
-  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || 'PHONE_ID_HERE';
+  const phoneId = process.env['WHATSAPP_PHONE_NUMBER_ID'] || 'PHONE_ID_HERE';
   
   console.log(`[Seed]: Seeding database for Phone ID: ${phoneId}...`);
 
@@ -14,7 +14,7 @@ async function main() {
     create: {
       name: 'My Main Business',
       whatsappPhoneId: phoneId,
-      whatsappToken: process.env.WHATSAPP_ACCESS_TOKEN || 'TOKEN_HERE',
+      whatsappToken: process.env['WHATSAPP_ACCESS_TOKEN'] || 'TOKEN_HERE',
       botPersonality: 'You are a helpful and professional WhatsApp AI assistant for our business. Keep responses concise and friendly.',
     },
   });

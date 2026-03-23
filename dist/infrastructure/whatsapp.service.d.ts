@@ -4,7 +4,14 @@ export declare class WhatsAppService {
     private readonly accessToken;
     private readonly phoneNumberId;
     constructor();
-    sendTextMessage(to: string, text: string): Promise<SendMessageResponse>;
-    markAsRead(messageId: string): Promise<void>;
+    private getRequestConfig;
+    sendTextMessage(to: string, text: string, options?: {
+        accessToken?: string;
+        phoneNumberId?: string;
+    }): Promise<SendMessageResponse>;
+    markAsRead(messageId: string, options?: {
+        accessToken?: string;
+        phoneNumberId?: string;
+    }): Promise<void>;
 }
 //# sourceMappingURL=whatsapp.service.d.ts.map
