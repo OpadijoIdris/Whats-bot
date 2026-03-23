@@ -6,11 +6,12 @@ A production-ready, multi-tenant WhatsApp AI assistant built with Node.js, TypeS
 
 ## 🚀 Key Features
 
-- **Multi-Tenant Architecture**: Support multiple business accounts on a single server instance.
+- **Dynamic Multi-Tenancy**: Automatically switches between business accounts using database-stored credentials (tokens/IDs).
 - **AI-Powered Conversations**: Integrated with OpenAI's GPT-4o for intelligent, context-aware responses.
 - **Persistent Memory**: Stores full chat history in PostgreSQL, allowing for coherent multi-turn conversations.
 - **Reliable Queuing (BullMQ/Redis)**: Offloads message processing to background workers to stay within Meta's strict 3-second webhook timeout.
-- **Strict Type Safety**: 100% TypeScript with strict null checks and validated environment variables.
+- **Advanced Security**: Implements HMAC SHA256 signature verification for all incoming WhatsApp webhooks.
+- **Comprehensive Testing**: Includes a unit testing suite powered by Vitest to ensure core logic reliability.
 - **Clean Architecture**: Decoupled layers (Core, Infrastructure, Application, Interfaces) for maximum maintainability.
 
 ---
@@ -24,7 +25,8 @@ A production-ready, multi-tenant WhatsApp AI assistant built with Node.js, TypeS
 - **Caching & Queues**: Redis & BullMQ
 - **AI**: OpenAI API
 - **Communication**: WhatsApp Cloud API (Meta)
-- **Validation**: Envalid & Zod
+- **Validation & Types**: Envalid & Zod
+- **Testing**: Vitest
 
 ---
 
@@ -62,6 +64,7 @@ WHATSAPP_PHONE_NUMBER_ID=your_phone_id
 WHATSAPP_ACCESS_TOKEN=your_permanent_access_token
 WHATSAPP_VERIFY_TOKEN=your_custom_verify_token
 WHATSAPP_API_VERSION=v20.0
+WHATSAPP_APP_SECRET=your_app_secret_from_meta
 
 # OpenAI
 OPENAI_API_KEY=your_openai_key
@@ -104,6 +107,12 @@ npm run build
 npm start
 ```
 
+### Running Tests
+Execute the unit testing suite using Vitest:
+```bash
+npm test
+```
+
 ---
 
 ## 📡 Webhook Configuration
@@ -130,9 +139,11 @@ npm start
 
 ## 🔒 Security & Reliability
 
+- **Webhook Security**: Verifies the `x-hub-signature-256` header (HMAC SHA256) to ensure requests originate from Meta.
 - **Idempotency**: Message IDs are used as Job IDs in BullMQ to prevent duplicate processing.
 - **Fail-Fast**: The app won't start if required environment variables are missing (via `envalid`).
 - **Retries**: BullMQ is configured with exponential backoff for failed OpenAI/WhatsApp calls.
+- **Test-Aware Config**: Environment validation is bypassed in test mode to allow for safe CI/CD execution.
 
 ---
 
