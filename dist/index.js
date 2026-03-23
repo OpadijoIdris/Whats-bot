@@ -6,6 +6,7 @@ import { OpenAIService } from './infrastructure/openai.service.js';
 import { MessagingPipelineService } from './application/messaging-pipeline.service.js';
 import { ConversationRepository } from './infrastructure/conversation.repository.js';
 import { MessageWorker } from './infrastructure/worker.js';
+import { verifyWhatsAppSignature } from './infrastructure/security.middleware.js';
 const whatsappService = new WhatsAppService();
 const openaiService = new OpenAIService();
 const conversationRepo = new ConversationRepository();
@@ -13,12 +14,16 @@ const messagingPipeline = new MessagingPipelineService(whatsappService, openaiSe
 new MessageWorker(messagingPipeline);
 const whatsappController = new WhatsAppController();
 const app = express();
-app.use(express.json());
+app.use(express.json({
+    verify: (req, _res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 app.get('/', (_req, res) => {
     res.json({ status: 'success', message: 'WhatsApp AI Bot is running with Queue' });
 });
 app.get('/webhook', whatsappController.verifyWebhook);
-app.post('/webhook', whatsappController.handleIncoming);
+app.post('/webhook', verifyWhatsAppSignature, whatsappController.handleIncoming);
 const start = () => {
     try {
         app.listen(env.PORT, () => {

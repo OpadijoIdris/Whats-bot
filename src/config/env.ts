@@ -38,10 +38,27 @@ try {
     DATABASE_URL: str({ desc: 'PostgreSQL Connection URL' }),
   });
 } catch (error: any) {
-  console.error('\n❌ ENVIRONMENT CONFIGURATION ERROR:');
-  console.error(error.message);
-  console.error('\nPlease update your .env file with valid credentials before starting the server.\n');
-  process.exit(1);
+  if (process.env['NODE_ENV'] === 'test') {
+    validatedEnv = {
+      NODE_ENV: 'test',
+      PORT: 3000,
+      WHATSAPP_PHONE_NUMBER_ID: 'test_id',
+      WHATSAPP_ACCESS_TOKEN: 'test_token',
+      WHATSAPP_VERIFY_TOKEN: 'test_verify',
+      WHATSAPP_API_VERSION: 'v20.0',
+      WHATSAPP_APP_SECRET: 'test_secret',
+      OPENAI_API_KEY: 'test_openai_key',
+      OPENAI_MODEL: 'gpt-4o',
+      REDIS_HOST: 'localhost',
+      REDIS_PORT: 6379,
+      DATABASE_URL: 'postgresql://localhost:5432/test',
+    };
+  } else {
+    console.error('\n❌ ENVIRONMENT CONFIGURATION ERROR:');
+    console.error(error.message);
+    console.error('\nPlease update your .env file with valid credentials before starting the server.\n');
+    process.exit(1);
+  }
 }
 
 export const env = validatedEnv!;

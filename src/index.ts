@@ -6,6 +6,7 @@ import { OpenAIService } from './infrastructure/openai.service.js';
 import { MessagingPipelineService } from './application/messaging-pipeline.service.js';
 import { ConversationRepository } from './infrastructure/conversation.repository.js';
 import { MessageWorker } from './infrastructure/worker.js';
+import { verifyWhatsAppSignature, RequestWithRawBody } from './infrastructure/security.middleware.js';
 
 // 1. Initialize Infrastructure Services
 const whatsappService = new WhatsAppService();
@@ -27,8 +28,13 @@ new MessageWorker(messagingPipeline);
 const whatsappController = new WhatsAppController();
 
 const app = express();
-
-app.use(express.json());
+ 
+// Configure Express to capture the raw body for signature verification
+app.use(express.json({
+  verify: (req: RequestWithRawBody, _res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 // Status endpoint
 app.get('/', (_req: Request, res: Response) => {
@@ -37,7 +43,7 @@ app.get('/', (_req: Request, res: Response) => {
 
 // WhatsApp Webhook Routes
 app.get('/webhook', whatsappController.verifyWebhook);
-app.post('/webhook', whatsappController.handleIncoming);
+app.post('/webhook', verifyWhatsAppSignature, whatsappController.handleIncoming);
 
 const start = () => {
   try {
